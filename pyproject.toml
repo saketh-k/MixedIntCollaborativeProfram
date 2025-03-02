@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "mixedintcollaborativeprofram"
+version = "0.1.0"
+description = "Collaborative project that investigates using reinforcement learning to learn the safe set and try to learn a barrier function for agent control"
+authors = ["Saketh K <saketh.k@uci.edu>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pettingzoo = "^1.24.3"
+numpy = "^2.2.3"
+pandas = "^2.2.3"
+matplotlib = "^3.10.1"
+pygame = "^2.6.1"
+gym = "^0.26.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+flake8 = "^7.1.2"
+black = "^25.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
