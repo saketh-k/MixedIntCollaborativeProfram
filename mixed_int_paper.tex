@@ -1,0 +1,102 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\begin{document}
+\title{Using Neural Networks to Speed Up Multi Agent Assignment Problems}
+\author{Saketh Karumuri}
+\maketitle
+\section{Problem Formulation}
+% Be sure to give everything a definition
+% write out the math first then define everthing
+Two robots want to cross a terrain represented by a string.
+We have a set of $p$ terrain types $\mathcal{T}= \{\tau_1,\tau_2,\dots, \tau_p\}$
+Landscape $q$ of length $N$ is a string of terrain types that define the terrain to be crossed.
+\begin{equation}
+  q \in \mathcal{T}^N = \underbrace{ \mathcal{T} \times \mathcal{T} \times \dots \times \mathcal{T} }_{N\text{ times}}
+\end{equation}
+We have the Terrain Resistance for robot $i$: $c_i(t)$ where $t\in \mathcal{T}$. The robots can collaborate in a mode defined in the set of modes $\mathcal{ M }$.
+\begin{equation}
+  \mathcal{ M } = \{0,1,2\} \\
+\end{equation}
+\begin{equation} 
+  m = \left.
+    \begin{cases}
+    0 & \text{ if robots do not collaborate} \\
+    1 & \text{ if robot 1 carries robot 2} \\
+    2 & \text{ if robot 2 carries robot 1} \\
+\end{cases}\right\} \text{ for } m \in \mathcal{M}
+\end{equation}
+Our decision variable is $\sigma$ the mode indicator.
+% is this a set of decision variables or our decision variable???
+\begin{equation}
+  \sigma : \mathcal{T} ^N \to \mathcal{ M }^N
+\end{equation}
+Where the $k$th element of $\sigma$ is written as $\sigma_k$. 
+The robot $i$ has mass $ \mu_i$. Our robot effective mass function $M_i(m)$ with collaborative mode $m \in \mathcal{M}$ indicates the effective mass of robot $i$ for a given mode of collaboration. Our effective mass functions are defined as:
+\begin{equation}
+  M_1(m) = \begin{cases}
+    \mu_1 & \text{ if } m=0\\
+    \mu_1 + \mu_2 & \text{ if } m=1\\
+    0 & \text{ if } m=2
+  \end{cases}
+  , \hspace{15px}
+  M_2(m) = \begin{cases}
+    \mu_2 & \text{ if } m=0\\
+    0 & \text{ if } m=1\\
+    \mu_1 + \mu_2  & \text{ if } m=2
+  \end{cases}
+\end{equation}
+The energy consumed by each robot for a given assignment string is
+\begin{equation}
+  E_i(\sigma) = \sum_{ k=1 }^N\left[ c_i(q_k) M_i(\sigma_k)+c_{si} \delta( {\sigma_{k-1},\sigma_k} )\right]
+\end{equation}
+\begin{equation}
+  \delta(m_i,m_j) = \begin{cases}
+    1 & \text{ if } m_i \neq m_j \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+Where $\sigma_0=0$, 
+$q_k$ is the $k$th element of the landscape $q$ and $c_{si}$ is the switching cost for the robots to change collaboration modes. Finally our objective function to minimize energy consumption is
+\begin{equation}
+  \min_\sigma \left\|\begin{bmatrix}
+    E_1(\sigma)\\E_2(\sigma)
+  \end{bmatrix}\right\|_p
+\end{equation}
+Where $\|\cdot\|_p$ is the $p$th norm and $p \in \{1,\infty\}$ % want to confirm this is true and that we're not overcomplicating this
+\section{Background}
+ Our objective is to use a trained network that can get within $95\%$ of the optimal solution described by the linear program. This network should also have a significant perfomance benefit to justify its use. We can assume that the robots location is shared as whenever they collaborate, their location is shared and if they are not collaborating, they will either share their location when they next collaborate or when they complete traversing the landscape. We also assume that we can discritize the landscape into $\hat{q}$
+ \section{Method}
+  We train on a set of terrains and optimal assignments. We use fixed terrain efficiency and switching cost, and use a mixed integer linear program to identify the optimal assignment $\sigma^\star$. We feed these as training data to a multi-layer neural network composed of 1 convolutional layer and 2 fully connected layers with dropout to remove unnecessary weights in the network.
+ [insert figure of neural network]
+ 
+ \subsection{Model Architecture Details}
+ Our multilayer neural network first embeds the input into
+ We then use a convolutional layer since for any given point $x$ the optimal assignment at that point is heavily influenced by it and its immediate surroundings. We use a kernel size of 9. We finally use a small fully connected layer with three outputs of which the maximum value signifies the predicted optimal strategy.
+ % how *exactly* can input affect output?
+ % Consider what would need to be changed for the recurrent part of this.
+ % Maybe we use MILP for inital and RNN for subsequent
+ % or we just run it idk
+  % define the world that the milp solves
+  %   - We have a 1 Dimensional Landscape L split into two sets, the set of points in the landscape corresponding to land and the set of points corresponding to water.
+  %   - We also have two robots with finite batteries that operate differently on each type of terrain. Robot 1 is far more efficient than Robot 2 on land, while Robot 2 is more efficient on water. These robots are able to interact with eachother and one robot can carry the other
+  % look at alex's problem statement, also n ice to compare to
+  % define the objective: get within @e of optimal solution milp
+  % talk about how
+  % end is results
+
+  % also think about what problems you want to be solving
+  % think of a list of quarter goals (this quarter)
+  %soemthing quantifiable, or a silulation
+ \subsection{Current Model Implementation}
+\begin{itemize}
+  \item \texttt{embed(input\_dictionary = 2, embedded\_size=32) }
+  \item \texttt{ConvolutionalLayer(input=216,output=128,kenel\_size=9)}
+  \item \texttt{DenseLayer(input=128,output=32)}
+  \item \texttt{ReLUActivation()}
+  \item \texttt{DenseLayer(input=32,output=32)}
+  \item \texttt{ReLUActivation()}
+  \item \texttt{DenseLayer(input=32,output=3)}
+\end{itemize}
+% you should find references about how to properly design a cnn for a task. and don't be afraid to say you chose a sufficiently large layersize after empirical testing
+\end{document}
